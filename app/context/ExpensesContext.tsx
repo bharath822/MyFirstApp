@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 type Expense = { 
     id: string;
@@ -124,6 +124,24 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
             setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
             // Recalculate balance if amount or type changed
             fetchExpenses(); // Or optimize by recalculating locally
+            setBalance(prev => {
+                const expense = expenses.find(e => e.id === id);
+                if (!expense) return prev;
+
+                const oldAmount = expense.amount;
+                const oldType = expense.transaction_type;
+                const newAmount = updates.amount ?? oldAmount;
+                const newType = updates.transaction_type ?? oldType;
+
+                let adjustedBalance = prev;
+
+                // Remove old amount
+                adjustedBalance += oldType === 'debit' ? oldAmount : -oldAmount;
+                // Add new amount
+                adjustedBalance += newType === 'debit' ? -newAmount : newAmount;
+
+                return adjustedBalance;
+            });
         }
     };
 

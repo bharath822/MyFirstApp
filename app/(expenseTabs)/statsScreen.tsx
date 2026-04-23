@@ -1,5 +1,5 @@
-import { creditCategories, debitCategories } from "../(tabs)/constants/categories";
-import { useExpenses } from "../(tabs)/context/ExpensesContext";
+import { creditCategories, debitCategories } from "../constants/categories";
+import { useExpenses } from "../context/ExpensesContext";
 import { PieChart } from 'react-native-chart-kit'
 import { Dimensions, View, Text, StyleSheet } from 'react-native'
 

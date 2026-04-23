@@ -45,7 +45,7 @@ export default function Auth() {
         }
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: 'https://yourapp.com/update-password', // We will configure this later in Expo
+            redirectTo: 'https://yourapp.com/update-password', // todo: We will configure this later in Expo
         });
 
         if (error) Alert.alert("Error", error.message);

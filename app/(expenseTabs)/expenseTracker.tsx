@@ -5,8 +5,8 @@ import { Picker } from '@react-native-picker/picker';
 import { FlatList } from "react-native";
 import { Ionicons } from '@expo/vector-icons'
 import { Modal } from 'react-native'
-import { creditCategories, debitCategories } from "../(tabs)/constants/categories";
-import { useExpenses } from "../(tabs)/context/ExpensesContext";
+import { creditCategories, debitCategories } from "../constants/categories";
+import { useExpenses } from "../context/ExpensesContext";
 import { Link } from 'expo-router';
 
 type expense = { 
@@ -17,7 +17,6 @@ type expense = {
     category: string
     transaction_type: 'debit' | 'credit' | string 
 }
-
 
 export default function ExpenseTrackerScreen() {
    const { expenses, balance, addExpense, deleteExpense, updateExpense, loading } = useExpenses();
@@ -98,8 +97,6 @@ export default function ExpenseTrackerScreen() {
             console.error('Failed to update expense:', error);
         }
     };
-
-    if (loading) return <Text>Loading...</Text>;
 
     return (
         <View style={{ flex: 1 }}>
