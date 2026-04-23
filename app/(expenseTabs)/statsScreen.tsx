@@ -1,5 +1,5 @@
-import { creditCategories, debitCategories } from "./constants/categories";
-import { useExpenses } from "./context/ExpensesContext";
+import { creditCategories, debitCategories } from "../(tabs)/constants/categories";
+import { useExpenses } from "../(tabs)/context/ExpensesContext";
 import { PieChart } from 'react-native-chart-kit'
 import { Dimensions, View, Text, StyleSheet } from 'react-native'
 
@@ -8,8 +8,8 @@ const screenWidth = Dimensions.get('window').width
 
 export default function StatsScreen() {
     const { expenses } = useExpenses()
-    const debits = expenses.filter(expense => expense.transactionType === 'debit')
-    const credits = expenses.filter(expense => expense.transactionType === 'credit')
+    const debits = expenses.filter(expense => expense.transaction_type === 'debit')
+    const credits = expenses.filter(expense => expense.transaction_type === 'credit')
     const totalDebits = debits.reduce((sum, expense) => sum + expense.amount, 0)
     const totalCredits = credits.reduce((sum, expense) => sum + expense.amount, 0)
 

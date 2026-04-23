@@ -15,12 +15,26 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
       }}>
       <Tabs.Screen
-        name="index"
+        name="counter"
         options={{
-          title:  'Home',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="home" color="grey" />
+          title: 'counter',
+          tabBarIcon: ({ color }) => <Ionicons size={28} name="home" color={color} />
         }}
-      />      
+      /> 
+        <Tabs.Screen
+         name="menu"
+         options={{
+           title: 'Menu',
+           tabBarIcon: ({ color }) => <Ionicons size={28} name="list" color={color} />
+         }}
+        />
+        <Tabs.Screen
+          name="user"
+          options={{
+            title: 'User',
+            tabBarIcon: ({ color }) => <Ionicons size={28} name="person" color={color} />
+          }}
+        />
     </Tabs>
   );
 }

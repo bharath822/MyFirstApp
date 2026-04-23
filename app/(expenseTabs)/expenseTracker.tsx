@@ -5,37 +5,39 @@ import { Picker } from '@react-native-picker/picker';
 import { FlatList } from "react-native";
 import { Ionicons } from '@expo/vector-icons'
 import { Modal } from 'react-native'
-import { creditCategories, debitCategories } from "./constants/categories";
-import { useExpenses } from "./context/ExpensesContext";
+import { creditCategories, debitCategories } from "../(tabs)/constants/categories";
+import { useExpenses } from "../(tabs)/context/ExpensesContext";
 import { Link } from 'expo-router';
 
 type expense = { 
-    id: number
+    id: string
     name: string
     amount: number
-    timeStamps: Date
+    created_at: string | null
     category: string
-    transactionType: 'debit' | 'credit' | string 
+    transaction_type: 'debit' | 'credit' | string 
 }
 
 
 export default function ExpenseTrackerScreen() {
-    const { expenses, setExpenses, balance, setBalance } = useExpenses()
+   const { expenses, balance, addExpense, deleteExpense, updateExpense, loading } = useExpenses();
     const [formData, setFormData] = useState({
         name: '',
         amount: '',
         category: '',
-        transactionType: ''
+        transaction_type: ''
     })
     const [editExpenseData, setEditExpenseData ] = useState({
         name: '',
         amount: '',
         category: '',
-        transactionType: ''
+        transaction_type: ''
     })
     const [editCustomCategory, setEditCustomCategory] = useState('')
     const [customCategory, setCustomCategory] = useState('')
     const [editingExpense, setEditingExpense] = useState<expense | null>(null)
+
+    if (loading) return <Text>Loading...</Text>;
 
     const setCategoryOptions = (transactionType: string) => {
         if (transactionType === 'credit') {
@@ -46,50 +48,59 @@ export default function ExpenseTrackerScreen() {
             return []
         }
     }
-    const handleAddExpense = () => {
-        const finalCategory = formData.category === 'Other' ? customCategory : formData.category
-        setExpenses([...expenses, { id: Date.now(), ...formData, amount: parseFloat(formData.amount), category: finalCategory, timeStamps: new Date() }])
-        if (formData.transactionType === 'debit') {
-            setBalance(balance - parseFloat(formData.amount))
-        } else if (formData.transactionType === 'credit') {
-            setBalance(balance + parseFloat(formData.amount))
+    const handleAddExpense = async () => {
+        const finalCategory = formData.category === 'Other' ? customCategory : formData.category;
+        try {
+            await addExpense({
+                name: formData.name,
+                amount: parseFloat(formData.amount),
+                category: finalCategory,
+                transaction_type: formData.transaction_type,
+            });
+            clearForm();
+        } catch (error) {
+            console.error('Failed to add expense:', error);
         }
-        console.log('Added Expense', { id: Date.now(), ...formData, category: finalCategory, timeStamps: new Date() })
-        clearForm()
-    }
+    };
     const clearForm = () => {
         setFormData({
             name: '',
             amount: '',
             category: '',
-            transactionType: '',
+            transaction_type: '',
         })
         setCustomCategory('')
     }
     const handleChange = (field: string, value: string) => {
-        if (field === 'transactionType') {
+        if (field === 'transaction_type') {
             setFormData({...formData, [field]: value, category: '' })
         }
         else{setFormData({ ...formData, [field]: value })}     
     }
-    const handleDelete = (id: number) => {
-        const deletedExpense = expenses.find(expense => expense.id === id)
-        if (!deletedExpense) return
-        setExpenses(expenses.filter(expense => expense.id !== id))
-        if (deletedExpense.transactionType === 'debit') {
-            setBalance(balance + deletedExpense.amount)
-        } else if (deletedExpense.transactionType === 'credit') {
-            setBalance(balance - deletedExpense.amount)
-        }   
-    }
-    const handleSave = () => {
-        if (!editingExpense) return
-        const oldAmount = editingExpense.transactionType === 'debit' ? -editingExpense.amount : editingExpense.amount
-        const newAmount = editExpenseData.transactionType === 'debit' ? -parseFloat(editExpenseData.amount) : parseFloat(editExpenseData.amount)
-        setBalance(balance - oldAmount + newAmount)
-        setExpenses(expenses.map(expense => expense.id === editingExpense.id ? { ...expense, ...editExpenseData, amount: parseFloat(editExpenseData.amount), category: editExpenseData.category === 'Other' ? editCustomCategory : editExpenseData.category } : expense))
-        setEditingExpense(null)
-    }
+    const handleDelete = async (id: string) => { // Change id to string
+        try {
+            await deleteExpense(id);
+        } catch (error) {
+            console.error('Failed to delete expense:', error);
+        }
+    };
+
+    const handleSave = async () => {
+        if (!editingExpense) return;
+        try {
+            await updateExpense(editingExpense.id, {
+                ...editExpenseData,
+                amount: parseFloat(editExpenseData.amount),
+                category: editExpenseData.category === 'Other' ? editCustomCategory : editExpenseData.category,
+            });
+            setEditingExpense(null);
+        } catch (error) {
+            console.error('Failed to update expense:', error);
+        }
+    };
+
+    if (loading) return <Text>Loading...</Text>;
+
     return (
         <View style={{ flex: 1 }}>
         <View
@@ -112,8 +123,8 @@ export default function ExpenseTrackerScreen() {
         />
         <Picker
             mode="dropdown"
-            selectedValue={formData.transactionType}
-            onValueChange={(itemValue) => handleChange('transactionType', itemValue)}
+            selectedValue={formData.transaction_type}
+            onValueChange={(itemValue) => handleChange('transaction_type', itemValue)}
             style={styles.input}
         >
             <Picker.Item label="Select Transaction Type" value="" style={{ fontSize: 12 }} />
@@ -127,7 +138,7 @@ export default function ExpenseTrackerScreen() {
             style={styles.input}
         >   
         <Picker.Item label="Select Category" value="" style={{ fontSize: 12 }} />
-        {setCategoryOptions(formData.transactionType).map((category, index) => (
+        {setCategoryOptions(formData.transaction_type).map((category, index) => (
                 <Picker.Item label={category} value={category} style={{ fontSize: 12 }} key={index}/>))}
         </Picker>
         {formData.category === 'Other' && (
@@ -166,9 +177,9 @@ export default function ExpenseTrackerScreen() {
         ): (
             <FlatList
                 data={expenses}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item) => item.id}
                 renderItem={({ item }) => {
-                    const isDebit = item.transactionType === 'debit';
+                    const isDebit = item.transaction_type === 'debit';
                     return (
                         <View style={styles.transactionItem}> 
                             <View>
@@ -181,7 +192,7 @@ export default function ExpenseTrackerScreen() {
                                             name: item.name,
                                             amount: item.amount.toString(),
                                             category: item.category,
-                                            transactionType: item.transactionType
+                                            transaction_type: item.transaction_type
                                         })
                                     }}
                                 >
@@ -190,7 +201,7 @@ export default function ExpenseTrackerScreen() {
                             </View>
                             <View>
                                 <Text style={{ color: isDebit ? 'red' : 'green' }}>  {isDebit ? '-' : '+'} {item.amount.toString()} </Text>
-                                <Text>{item.timeStamps.toLocaleDateString()}</Text>
+                                <Text>{item.created_at ? new Date(item.created_at).toLocaleDateString() : ''}</Text>
                                 <TouchableOpacity
                                     onPress={() => handleDelete(item.id)}
                                 >
@@ -225,8 +236,8 @@ export default function ExpenseTrackerScreen() {
                     <Picker
                         mode="dropdown"
                         style={styles.input}
-                        selectedValue={editExpenseData.transactionType}
-                        onValueChange={(itemValue) => setEditExpenseData({ ...editExpenseData, transactionType: itemValue, category: '' })}
+                        selectedValue={editExpenseData.transaction_type}
+                        onValueChange={(itemValue) => setEditExpenseData({ ...editExpenseData, transaction_type: itemValue, category: '' })}
                     >
                         <Picker.Item label="Select Transaction Type" value="" style={{ fontSize: 12 }} />
                         <Picker.Item label="Credit" value="credit" style={{ fontSize: 12 }} />
@@ -237,7 +248,7 @@ export default function ExpenseTrackerScreen() {
                         selectedValue={editExpenseData.category}
                         onValueChange={(itemValue) => setEditExpenseData({ ...editExpenseData, category: itemValue })}
                         style={styles.input}
-                    >   {setCategoryOptions(editExpenseData.transactionType).map((category, index) => (
+                    >   {setCategoryOptions(editExpenseData.transaction_type).map((category, index) => (
                             <Picker.Item label={category} value={category} style={{ fontSize: 12 }} key={index}/>))}
                     </Picker>
                     {editExpenseData.category === 'Other' && (

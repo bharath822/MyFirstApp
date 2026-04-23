@@ -35,7 +35,7 @@ export default function RootLayout() {
       router.replace('/auth'); 
     } else if (session && inAuthGroup) {
       // Logged in? Go to the main tabs
-      router.replace('/');
+      router.replace('/(tabs)');
     }
   }, [session, initialized, segments]);
 
